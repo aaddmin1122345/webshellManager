@@ -182,10 +182,10 @@ func generateWebShell() {
 // printLogo 函数用于打印程序的 Logo 和帮助信息
 func printLogo() {
 	logo := `
-      ____            _    
+      ____            _
      / ___| ___   ___| | __
     | |  _ / _ \ / __| |/ /
-    | |_| | (_) | (__|   < 
+    | |_| | (_) | (__|   <
      \____|\___/ \___|_|\_\
     `
 	fmt.Printf("%s\n", logo)
