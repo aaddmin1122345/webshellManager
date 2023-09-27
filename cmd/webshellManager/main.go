@@ -189,7 +189,7 @@ func printLogo() {
      \____|\___/ \___|_|\_\
     `
 	fmt.Printf("%s\n", logo)
-	fmt.Println("--help\t显示完整帮助信息\n--cmd\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell 生成简单的web_shell\n--dbinfo 显示目前数据库信息\n--adddb\t添加数据\n------------华丽的分割线-----------")
+	fmt.Println("--help\t显示完整帮助信息\n--cmd\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell 生成简单的web_shell\n--dbinfo 显示目前数据库信息\n--adddb\t添加数据\n--phpinfo\t显示phpinfo信息\n------------华丽的分割线-----------")
 }
 
 func main() {
