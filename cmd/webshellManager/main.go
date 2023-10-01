@@ -234,12 +234,12 @@ func printLogo() {
      \____|\___/ \___|_|\_\
     `
 	fmt.Printf("%s\n", logo)
-	fmt.Println("--help\t显示完整帮助信息\n--cmd\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell 生成简单的web_shell\n--dbinfo 显示目前数据库信息\n--adddb\t添加数据\n--phpinfo\t查看php禁用的函数\n------------华丽的分割线-----------")
+	fmt.Println("--help\t显示完整帮助信息\n--code\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell 生成简单的web_shell\n--dbinfo 显示目前数据库信息\n--adddb\t添加数据\n--phpinfo\t查看php禁用的函数\n------------华丽的分割线-----------")
 }
 
 func main() {
 	showHelp := flag.Bool("help", false, "显示帮助信息")
-	code := flag.String("cmd", "", "执行 PHP 代码")
+	code := flag.String("code", "", "执行 PHP 代码")
 	shell := flag.String("shell", "", "利用system函数执行系统命令")
 	webShell := flag.Bool("generate-shell", false, "生成php的一句话木马")
 	dbInfo := flag.Bool("dbinfo", false, "显示目前数据库信息")
