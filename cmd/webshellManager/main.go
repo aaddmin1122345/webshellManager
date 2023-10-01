@@ -155,7 +155,7 @@ func shellExec(payload string) {
 	//return string(bodyShell)
 }
 
-func phpinfo() {
+func disableFunctionInfo() {
 	// 保存当前的标准输出
 	oldStdout := os.Stdout
 
@@ -234,7 +234,7 @@ func printLogo() {
      \____|\___/ \___|_|\_\
     `
 	fmt.Printf("%s\n", logo)
-	fmt.Println("--help\t显示完整帮助信息\n--cmd\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell 生成简单的web_shell\n--dbinfo 显示目前数据库信息\n--adddb\t添加数据\n--phpinfo\t显示phpinfo信息\n------------华丽的分割线-----------")
+	fmt.Println("--help\t显示完整帮助信息\n--cmd\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell 生成简单的web_shell\n--dbinfo 显示目前数据库信息\n--adddb\t添加数据\n--phpinfo\t查看php禁用的函数\n------------华丽的分割线-----------")
 }
 
 func main() {
@@ -244,7 +244,7 @@ func main() {
 	webShell := flag.Bool("generate-shell", false, "生成php的一句话木马")
 	dbInfo := flag.Bool("dbinfo", false, "显示目前数据库信息")
 	addDb := flag.Bool("adddb", false, "添加数据")
-	phpInfo := flag.Bool("phpinfo", false, "查看phpinfo")
+	disableFunction := flag.Bool("phpinfo", false, "查看php禁用的函数")
 
 	flag.Parse()
 
@@ -260,8 +260,8 @@ func main() {
 		selectDb()
 	} else if *addDb {
 		addURL()
-	} else if *phpInfo {
-		phpinfo()
+	} else if *disableFunction {
+		disableFunctionInfo()
 	} else {
 		printLogo()
 	}
