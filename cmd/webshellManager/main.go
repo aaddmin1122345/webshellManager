@@ -38,43 +38,63 @@ func addURL() {
 	fmt.Printf("输入备注:\t")
 	fmt.Scanln(&other)
 	db, err := connectDb()
-	handleError(err, "连接数据库出错!")
-	//defer func(db *sql.DB) {
-	//	_ = db.Close()
-	//}(db)
-	defer db.Close()
 	insertDataSQL := `
     INSERT INTO info (url, passwd, ua, other) VALUES (?, ?, ?, ?);`
 	_, err = db.Exec(insertDataSQL, url, passwd, ua, other)
-	if err != nil {
-		handleError(err, "插入数据出错!")
-		return
-	}
+	handleError(err, "插入数据出错!")
 	fmt.Println("数据已成功添加!")
+	defer db.Close()
 }
 
 func connectDb() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", "test.db")
 	handleError(err, "打开数据库错误!")
+	//defer db.Close()
 	return db, nil
 }
 
-func selectDb() {
-	db, err := sql.Open("sqlite3", "test.db")
-	handleError(err, "打开数据库错误!")
-	defer func(db *sql.DB) {
-		_ = db.Close()
-	}(db)
+func userSelect() {
+	userInput := 0
+	selectDb()
+	fmt.Println("请输入你的选择!")
+	fmt.Scanln(&userInput)
+	switch userInput {
+	case 1:
+		selectDb()
+	}
 
-	rows, err := db.Query("select id, url, passwd, ua from info;")
+}
+
+//	func selectDb() {
+//		//string id int
+//		var url, passwd, ua, id string
+//		db, err := connectDb()
+//		fmt.Scanln("%s", &id)
+//		rows, err := db.Query("select url, passwd, ua from info where id =? ", id)
+//		//println(rows)
+//		handleError(err, "查询数据库错误!")
+//		defer rows.Close()
+//		for rows.Next() {
+//			//var id int
+//			//var url, passwd, ua string
+//			rows.Scan(&id, &url, &passwd, &ua)
+//			fmt.Printf("id:%s url:%s passwd:%s ua:%s\n", id, url, passwd, ua)
+//		}
+//		//return id, url, passwd, ua, nil
+//	}
+
+func dbAll() {
+	db, err := connectDb()
+	handleError(err, "连接数据库出错!")
+	defer db.Close()
+
+	rows, err := db.Query("select id,url, passwd, ua from info; ")
 	handleError(err, "查询数据库错误!")
-	defer func(rows *sql.Rows) {
-		_ = rows.Close()
-	}(rows)
+	defer rows.Close()
 
 	for rows.Next() {
-		var id int
 		var url, passwd, ua string
+		var id int
 		err := rows.Scan(&id, &url, &passwd, &ua)
 		handleError(err, "遍历数据库内容出错!")
 
@@ -82,23 +102,39 @@ func selectDb() {
 	}
 }
 
-func checkFile() {
-	_, err := os.Stat("test.db")
-	if err == nil {
-	} else if os.IsNotExist(err) {
-		fmt.Println("检测到数据库配置文件不存在，将创建数据库!")
-		createTable()
-	} else {
-		fmt.Printf("检查文件错误: %v\n", err)
+func selectDb() (int, string, string, string, error) {
+	println("以下是数据库中的全部信息!")
+	dbAll()
+	var id int
+	var url, passwd, ua string
+	fmt.Print("输入要查询的ID: ")
+	_, err := fmt.Scanln(&id)
+	handleError(err, "查询id失败!")
+
+	db, err := connectDb()
+	handleError(err, "连接数据库出错!")
+	defer db.Close()
+
+	rows, err := db.Query("select url, passwd, ua from info where id = ?", id)
+	handleError(err, "查询数据库错误!")
+	defer rows.Close()
+
+	for rows.Next() {
+
+		err := rows.Scan(&url, &passwd, &ua)
+		handleError(err, "遍历数据库内容出错!")
+
+		fmt.Printf("id:%d url:%s passwd:%s ua:%s\n", id, url, passwd, ua)
 	}
+	return id, url, passwd, ua, nil
+}
+
+func checkFile() {
+
 }
 
 func createTable() {
-	db, err := sql.Open("sqlite3", "test.db")
-	handleError(err, "打开数据库错误!")
-	defer func(db *sql.DB) {
-		_ = db.Close()
-	}(db)
+	db, err := connectDb()
 
 	createTableSQL := `
     CREATE TABLE IF NOT EXISTS info (
@@ -117,16 +153,14 @@ func createTable() {
 
 	_, err = db.Exec(insertDataSQL, "http://test.test", "cmd", "test_ua", "备注信息")
 	handleError(err, "插入数据出错!")
+	defer db.Close()
 }
 
 // makeRequest 函数用于创建并发送 HTTP POST 请求
 func makeRequest(payload string) (*http.Response, error) {
 
 	req, err := http.NewRequest("POST", httpURL, strings.NewReader(payload))
-	if err != nil {
-		return nil, err
-	}
-
+	handleError(err, "发送payload失败!")
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", contentType)
 
@@ -224,20 +258,7 @@ func generateWebShell() {
 	fmt.Printf("生成文件成功!文件名:%s\n", filename)
 }
 
-// printLogo 函数用于打印程序的 Logo 和帮助信息
-func printLogo() {
-	logo := `
-      ____            _
-     / ___| ___   ___| | __
-    | |  _ / _ \ / __| |/ /
-    | |_| | (_) | (__|   <
-     \____|\___/ \___|_|\_\
-    `
-	fmt.Printf("%s\n", logo)
-	fmt.Println("--help\t显示完整帮助信息\n--code\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell 生成简单的web_shell\n--dbinfo 显示目前数据库信息\n--adddb\t添加数据\n--phpinfo\t查看php禁用的函数\n------------华丽的分割线-----------")
-}
-
-func main() {
+func start() {
 	showHelp := flag.Bool("help", false, "显示帮助信息")
 	code := flag.String("code", "", "执行 PHP 代码")
 	shell := flag.String("shell", "", "利用system函数执行系统命令")
@@ -266,5 +287,32 @@ func main() {
 		printLogo()
 	}
 
-	checkFile()
+	_, err := os.Stat("test.db")
+	if err == nil {
+	} else if os.IsNotExist(err) {
+		fmt.Println("检测到数据库配置文件不存在，将创建数据库!")
+		createTable()
+	} else {
+		fmt.Printf("检查文件错误: %v\n", err)
+	}
+}
+
+// printLogo 函数用于打印程序的 Logo 和帮助信息
+func printLogo() {
+	logo := `
+      ____            _
+     / ___| ___   ___| | __
+    | |  _ / _ \ / __| |/ /
+    | |_| | (_) | (__|   <
+     \____|\___/ \___|_|\_\
+    `
+	fmt.Printf("%s\n", logo)
+	fmt.Println("--help\t显示完整帮助信息\n--code\t输入要执行的 PHP 代码(省略`;`)\n--shell\t利用 system 函数执行系统命令\n--generate-shell 生成简单的web_shell\n--dbinfo 显示目前数据库信息\n--adddb\t添加数据\n--phpinfo\t查看php禁用的函数\n------------华丽的分割线-----------")
+}
+
+func main() {
+	//start()
+	//userSelect()
+	id, url, passwd, ua, err := selectDb()
+	fmt.Println(id, url, passwd, ua, err)
 }
