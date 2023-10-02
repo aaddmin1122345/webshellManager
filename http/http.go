@@ -15,7 +15,9 @@ const (
 
 func MakeRequest(payload string) (*http.Response, error) {
 	req, err := http.NewRequest("POST", httpURL, strings.NewReader(payload))
-	util.HandleError(err, "发送payload失败!")
+	{
+		util.HandleError(err, "发送payload失败!")
+	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", contentType)
 

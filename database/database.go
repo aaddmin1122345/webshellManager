@@ -10,7 +10,9 @@ import (
 
 func connectDb() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", "test.db")
-	util.HandleError(err, "打开数据库错误!")
+	{
+		util.HandleError(err, "打开数据库错误!")
+	}
 	return db, err
 }
 
@@ -26,51 +28,93 @@ func CreateTable() {
     );`
 
 	_, err = db.Exec(createTableSQL)
-	util.HandleError(err, "创建数据库出错!")
-
+	{
+		util.HandleError(err, "创建数据库出错!")
+	}
 	insertDataSQL := `
     INSERT INTO info (url, passwd, ua, other) VALUES (?, ?, ?, ?);`
 
 	_, err = db.Exec(insertDataSQL, "http://test.test", "cmd", "test_ua", "备注信息")
-	util.HandleError(err, "插入数据出错!")
+	{
+		util.HandleError(err, "插入数据出错!")
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		{
+			util.HandleError(err, "CreateTable函数关闭数据库出错!")
+		}
+	}(db)
 
-	defer db.Close()
 }
 
 func AddURL() {
 	var url, passwd, ua, other string
 	fmt.Printf("输入添加的url:\t")
-	fmt.Scanln(&url)
+	_, err := fmt.Scanln(&url)
+	if err != nil {
+		return
+	}
 	fmt.Printf("输入添加的passwd:\t")
-	fmt.Scanln(&passwd)
+	_, err = fmt.Scanln(&passwd)
+	if err != nil {
+		return
+	}
 	fmt.Printf("输入添加的ua:\t")
-	fmt.Scanln(&ua)
+	_, err = fmt.Scanln(&ua)
+	if err != nil {
+		return
+	}
 	fmt.Printf("输入备注:\t")
-	fmt.Scanln(&other)
+	_, err = fmt.Scanln(&other)
+	if err != nil {
+		return
+	}
 	db, err := connectDb()
 	insertDataSQL := `
     INSERT INTO info (url, passwd, ua, other) VALUES (?, ?, ?, ?);`
 	_, err = db.Exec(insertDataSQL, url, passwd, ua, other)
-	util.HandleError(err, "插入数据出错!")
+	{
+		util.HandleError(err, "插入数据出错!")
+	}
 	fmt.Println("数据已成功添加!")
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		{
+			util.HandleError(err, "AddURL函数关闭数据库错误!")
+		}
+	}(db)
 }
 
 func DbAll() {
 	db, err := connectDb()
-	util.HandleError(err, "连接数据库出错!")
-	defer db.Close()
+	{
+		util.HandleError(err, "连接数据库出错!")
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		{
+			util.HandleError(err, "Dball第一次函数关闭数据库错误!")
+		}
+	}(db)
 
 	rows, err := db.Query("select id,url, passwd, ua from info; ")
-	util.HandleError(err, "查询数据库错误!")
-	defer rows.Close()
+	{
+		util.HandleError(err, "查询数据库错误!")
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		{
+			util.HandleError(err, "Dball第二次关闭数据库错误!")
+		}
+	}(rows)
 
 	for rows.Next() {
 		var url, passwd, ua string
 		var id int
 		err := rows.Scan(&id, &url, &passwd, &ua)
-		util.HandleError(err, "遍历数据库内容出错!")
-
+		{
+			util.HandleError(err, "遍历数据库内容出错!")
+		}
 		fmt.Printf("id:%d url:%s passwd:%s ua:%s\n", id, url, passwd, ua)
 	}
 }
@@ -82,20 +126,36 @@ func SelectDb() {
 	var url, passwd, ua string
 	fmt.Print("输入要查询的ID: ")
 	_, err := fmt.Scanln(&id)
-	util.HandleError(err, "查询id失败!")
-
+	{
+		util.HandleError(err, "查询id失败!")
+	}
 	db, err := connectDb()
-	util.HandleError(err, "连接数据库出错!")
-	defer db.Close()
+	{
+		util.HandleError(err, "连接数据库出错!")
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		{
+			util.HandleError(err, "SelectDb第一个函数关闭数据库错误!")
+		}
+	}(db)
 
 	rows, err := db.Query("select url, passwd, ua from info where id = ?", id)
-	util.HandleError(err, "查询数据库错误!")
-	defer rows.Close()
+	{
+		util.HandleError(err, "查询数据库错误!")
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		{
+			util.HandleError(err, "SelectDb函数第二个关闭数据库错误!")
+		}
+	}(rows)
 
 	for rows.Next() {
 		err := rows.Scan(&url, &passwd, &ua)
-		util.HandleError(err, "遍历数据库内容出错!")
-
+		{
+			util.HandleError(err, "遍历数据库内容出错!")
+		}
 		fmt.Printf("id:%d url:%s passwd:%s ua:%s\n", id, url, passwd, ua)
 	}
 }

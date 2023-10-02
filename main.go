@@ -16,7 +16,19 @@ const (
 	httpURL     = "http://test.test/eval.php"
 )
 
+func checkFile() {
+	_, err := os.Stat("test.db")
+	if err == nil {
+	} else if os.IsNotExist(err) {
+		fmt.Println("检测到数据库配置文件不存在，将创建数据库!")
+		database.CreateTable()
+	} else {
+		fmt.Printf("检查文件错误: %v\n", err)
+	}
+}
+
 func main() {
+	checkFile()
 	showHelp := flag.Bool("help", false, "显示帮助信息")
 	code := flag.String("code", "", "执行 PHP 代码")
 	shell := flag.String("shell", "", "利用 system 函数执行系统命令")
@@ -30,9 +42,17 @@ func main() {
 	if *showHelp {
 		util.PrintLogo()
 	} else if *code != "" {
-		php.ExecuteCode(*code)
+		executeCode, err := php.ExecuteCode(*code)
+		{
+			util.HandleError(err, "错误")
+			fmt.Println(*executeCode)
+		}
 	} else if *shell != "" {
-		shell2.ExecShell(*shell)
+		execShell, err := shell2.ExecShell(*shell)
+		{
+			util.HandleError(err, "错误")
+			fmt.Println(*execShell)
+		}
 	} else if *webShell {
 		php.GenerateWebShell()
 	} else if *dbInfo {
@@ -45,18 +65,4 @@ func main() {
 		util.PrintLogo()
 	}
 
-	checkFile()
 }
-
-func checkFile() {
-	_, err := os.Stat("test.db")
-	if err == nil {
-	} else if os.IsNotExist(err) {
-		fmt.Println("检测到数据库配置文件不存在，将创建数据库!")
-		database.CreateTable()
-	} else {
-		fmt.Printf("检查文件错误: %v\n", err)
-	}
-}
-
-// ...
