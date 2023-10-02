@@ -28,6 +28,7 @@ func checkFile() {
 }
 
 func main() {
+	database.SelectDb()
 	checkFile()
 	showHelp := flag.Bool("help", false, "显示帮助信息")
 	code := flag.String("code", "", "执行 PHP 代码")

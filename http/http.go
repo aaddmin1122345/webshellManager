@@ -13,7 +13,7 @@ const (
 	httpURL     = "http://test.test/eval.php"
 )
 
-func MakeRequest(payload string) (*http.Response, error) {
+func MakeRequest(payload, httpURL, userAgent string) (*http.Response, error) {
 	req, err := http.NewRequest("POST", httpURL, strings.NewReader(payload))
 	{
 		util.HandleError(err, "发送payload失败!")

@@ -12,7 +12,8 @@ import (
 )
 
 func ExecuteCode(payload string) (*string, error) {
-	evalPayload := "cmd=" + payload + ";"
+	//evalPayload := "cmd=" + payload + ";"
+	evalPayload := fmt.Sprintf("cmd='%s';", payload)
 	respEval, err := http.MakeRequest(evalPayload)
 	{
 		util.HandleError(err, "发送payload失败!")
