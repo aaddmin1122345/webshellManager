@@ -51,23 +51,23 @@ func AddURL() {
 	var url, passwd, ua, other string
 	fmt.Printf("输入添加的url:\t")
 	_, err := fmt.Scanln(&url)
-	if err != nil {
-		return
+	{
+		util.HandleError(err, "添加url失败!")
 	}
 	fmt.Printf("输入添加的passwd:\t")
 	_, err = fmt.Scanln(&passwd)
-	if err != nil {
-		return
+	{
+		util.HandleError(err, "添加passwd失败!")
 	}
 	fmt.Printf("输入添加的ua:\t")
 	_, err = fmt.Scanln(&ua)
-	if err != nil {
-		return
+	{
+		util.HandleError(err, "添加ua失败!")
 	}
 	fmt.Printf("输入备注:\t")
 	_, err = fmt.Scanln(&other)
-	if err != nil {
-		return
+	{
+		util.HandleError(err, "添加备注失败!")
 	}
 	db, err := connectDb()
 	insertDataSQL := `
