@@ -35,7 +35,7 @@ func main() {
 	webShell := flag.Bool("generate-shell", false, "生成 PHP 的一句话木马")
 	dbInfo := flag.Bool("dbinfo", false, "显示目前数据库信息")
 	addDb := flag.Bool("adddb", false, "添加数据")
-	disableFunction := flag.Bool("phpinfo", false, "查看 PHP 禁用的函数")
+	disableFunction := flag.Bool("disableFunction", false, "查看 PHP 禁用的函数")
 
 	flag.Parse()
 
