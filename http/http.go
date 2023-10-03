@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	userAgent   = `Mozilla/5.0 ...` // 保留您的常量
+	userAgent   = `test`
 	contentType = "application/x-www-form-urlencoded"
 	httpURL     = "http://test.test/eval.php"
 )
