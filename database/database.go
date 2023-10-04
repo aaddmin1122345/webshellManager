@@ -8,7 +8,8 @@ import (
 	"webshellManager/util"
 )
 
-var db *sql.DB // 全局数据库连接
+// 数据库连接
+var db *sql.DB
 
 func init() {
 	var err error
@@ -21,6 +22,7 @@ func connectDb() (*sql.DB, error) {
 	return db, err
 }
 
+// CreateTable 创建数据库表
 func CreateTable() {
 	createTableSQL := `
     CREATE TABLE IF NOT EXISTS info (
@@ -37,10 +39,11 @@ func CreateTable() {
 	insertDataSQL := `
     INSERT INTO info (url, passwd, ua, other) VALUES (?, ?, ?, ?);`
 
-	_, err = db.Exec(insertDataSQL, "http://test.test", "cmd", "test_ua", "备注信息")
+	_, err = db.Exec(insertDataSQL, "http://test.test/eval.php", "cmd", "test_ua", "备注信息")
 	util.HandleError(err, "插入数据出错!")
 }
 
+// AddURL 添加URL
 func AddURL() {
 	var url, passwd, ua, other string
 	fmt.Printf("输入添加的url:\t")
@@ -63,45 +66,43 @@ func AddURL() {
     INSERT INTO info (url, passwd, ua, other) VALUES (?, ?, ?, ?);`
 	_, err = db.Exec(insertDataSQL, url, passwd, ua, other)
 	util.HandleError(err, "插入数据出错!")
-
 	fmt.Println("数据已成功添加!")
 }
 
-func DbAll() {
-	rows, err := db.Query("SELECT id,url, passwd, ua FROM info; ")
+// ALLDB 查询全部数据库
+func ALLDB() {
+	resultRows, err := db.Query("SELECT id,url, passwd, ua FROM info; ")
 	util.HandleError(err, "查询数据库错误!")
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		util.HandleError(err, "关闭数据库错误!")
-	}(rows)
-
-	for rows.Next() {
-		var url, passwd, ua string
-		var id int
-		err := rows.Scan(&id, &url, &passwd, &ua)
-		util.HandleError(err, "遍历数据库内容出错!")
-		fmt.Printf("id:%d url:%s passwd:%s ua:%s\n", id, url, passwd, ua)
-	}
+	CloseDB()
+	listDB(resultRows)
 }
 
+// SelectDb 选择数据库记录
 func SelectDb() {
 	fmt.Println("以下是数据库中的全部信息!")
-	DbAll()
+	ALLDB()
 	var id int
-	var url, passwd, ua string
-	fmt.Print("输入要查询的ID: ")
+	fmt.Print("输入要操作的数据库id: ")
 	_, err := fmt.Scanln(&id)
 	util.HandleError(err, "查询id失败!")
 
-	rows, err := db.Query("SELECT url, passwd, ua FROM info WHERE id = ?", id)
+	resultRows, err := db.Query("SELECT url, passwd, ua FROM info WHERE id = ?", id)
 	util.HandleError(err, "查询数据库错误!")
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		util.HandleError(err, "关闭数据库错误!")
-	}(rows)
+	CloseDB()
+	listDB(resultRows)
+}
 
-	for rows.Next() {
-		err := rows.Scan(&url, &passwd, &ua)
+// CloseDB 关闭数据库连接
+func CloseDB() {
+	err := db.Close()
+	util.HandleError(err, "关闭数据库连接失败!")
+}
+
+func listDB(resultRows *sql.Rows) {
+	for resultRows.Next() {
+		var id int
+		var url, passwd, ua string
+		err := resultRows.Scan(&id, &url, &passwd, &ua)
 		util.HandleError(err, "遍历数据库内容出错!")
 		fmt.Printf("id:%d url:%s passwd:%s ua:%s\n", id, url, passwd, ua)
 	}
