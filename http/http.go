@@ -7,19 +7,15 @@ import (
 	"webshellManager/util"
 )
 
-const (
-	userAgent   = `test`
-	contentType = "application/x-www-form-urlencoded"
-	httpURL     = "http://test.test/eval.php"
-)
-
-func MakeRequest(payload, httpURL, userAgent string) (*http.Response, error) {
-	req, err := http.NewRequest("POST", httpURL, strings.NewReader(payload))
+func MakeRequest(payload, url, ua string) (*http.Response, error) {
+	//fmt.Println("11111111111111111111:\t", url)
+	req, err := http.NewRequest("POST", url, strings.NewReader(payload))
 	{
 		util.HandleError(err, "发送payload失败!")
 	}
-	req.Header.Set("User-Agent", userAgent)
-	req.Header.Set("Content-Type", contentType)
+	//fmt.Println(req)
+	req.Header.Set("User-Agent", ua)
+	req.Header.Set("Content-Type", util.ContentType)
 
 	client := &http.Client{}
 	return client.Do(req)

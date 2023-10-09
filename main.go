@@ -10,12 +10,6 @@ import (
 	"webshellManager/util"
 )
 
-const (
-	userAgent   = `Mozilla/5.0 (iPod; U; CPU iPhone OS 3_2 like Mac OS X; cmn-TW) AppleWebKit/533.20.7 (KHTML, like Gecko) Version/3.0.5 Mobile/8B119 Safari/6533.20.7`
-	contentType = "application/x-www-form-urlencoded"
-	httpURL     = "http://test.test/eval.php"
-)
-
 func checkFile() {
 	_, err := os.Stat("test.db")
 	if err == nil {
@@ -28,7 +22,6 @@ func checkFile() {
 }
 
 func main() {
-	database.SelectDb()
 	checkFile()
 	showHelp := flag.Bool("help", false, "显示帮助信息")
 	code := flag.String("code", "", "执行 PHP 代码")
@@ -57,7 +50,7 @@ func main() {
 	} else if *webShell {
 		php.GenerateWebShell()
 	} else if *dbInfo {
-		database.DbAll()
+		database.ALLDB()
 	} else if *addDb {
 		database.AddURL()
 	} else if *disableFunction {

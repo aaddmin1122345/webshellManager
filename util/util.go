@@ -4,7 +4,28 @@ package util
 import (
 	"fmt"
 	"log"
+	//"webshellManager/database"
+	//"webshellManager/database"
 )
+
+var (
+	HttpURL   string
+	Passwd    string
+	UserAgent string
+	//err         error
+	ContentType = "application/x-www-form-urlencoded"
+)
+
+func Init(httpURl, passwd, userAgent string) {
+	HttpURL = httpURl
+	Passwd = passwd
+	UserAgent = userAgent
+	fmt.Println(HttpURL, Passwd, UserAgent)
+	//test := "成功!"
+	//return test
+	//return HttpURL, Passwd, UserAgent, err
+
+}
 
 func HandleError(err error, message string) {
 	if err != nil {

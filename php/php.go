@@ -7,14 +7,18 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"webshellManager/database"
 	"webshellManager/http"
 	"webshellManager/util"
 )
 
 func ExecuteCode(payload string) (*string, error) {
+	database.SelectDb()
 	//evalPayload := "cmd=" + payload + ";"
-	evalPayload := fmt.Sprintf("cmd='%s';", payload)
-	respEval, err := http.MakeRequest(evalPayload)
+	evalPayload := fmt.Sprintf("%s=%s;", util.Passwd, payload)
+	fmt.Println("这是payload:\t", evalPayload)
+	respEval, err := http.MakeRequest(evalPayload, util.HttpURL, util.UserAgent)
+	//fmt.Println(util.HttpURL, util.Passwd, util.UserAgent)
 	{
 		util.HandleError(err, "发送payload失败!")
 	}
@@ -32,7 +36,10 @@ func ExecuteCode(payload string) (*string, error) {
 	if bodyresp != "" {
 		fmt.Println("执行代码响应:")
 		//fmt.Printf("%s", bodyEval)
+	} else {
+		fmt.Println("连接失败,请检查连接密码!")
 	}
+	//fmt.Println("执行代码响应:")
 	return &bodyresp, nil
 }
 

@@ -9,8 +9,8 @@ import (
 )
 
 func ExecShell(payload string) (*string, error) {
-	shellPayload := fmt.Sprintf("cmd=system('%s');", payload)
-	respShell, err := http.MakeRequest(shellPayload)
+	shellPayload := fmt.Sprintf("%s=system('%s');", util.Passwd, payload)
+	respShell, err := http.MakeRequest(shellPayload, util.HttpURL, util.UserAgent)
 	{
 		util.HandleError(err, "请求执行系统命令失败")
 	}
