@@ -88,6 +88,7 @@ func SelectDb() {
 	util.HandleError(err, "查询id失败!")
 	resultRows, err := db.Query("SELECT id, url, passwd,ua FROM info WHERE id = ?", id)
 	util.HandleError(err, "查询数据库错误!")
+	fmt.Println("\n下面是选中的数据库!")
 	listDB(resultRows)
 	CloseDB()
 
@@ -118,6 +119,8 @@ func listDB(resultRows *sql.Rows) {
 		// 使用颜色对象输出绿色的ID和对齐的列
 		fmt.Printf("| %-2s%-1s | %-30s | %-8s | %-7s |\n", green.Sprint(id), "", url, passwd, ua)
 		fmt.Println("+----+--------------------------------+----------+---------+")
+		// 初始化数据!
+		util.Init(url, passwd, ua)
 
 	}
 
