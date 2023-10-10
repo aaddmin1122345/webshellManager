@@ -4,6 +4,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"github.com/fatih/color"
 	_ "github.com/mattn/go-sqlite3"
 	"webshellManager/util"
 )
@@ -73,8 +74,8 @@ func AddURL() {
 func ALLDB() {
 	resultRows, err := db.Query("SELECT id,url, passwd, ua FROM info; ")
 	util.HandleError(err, "查询数据库错误!")
-	CloseDB()
 	listDB(resultRows)
+	//CloseDB()
 }
 
 // SelectDb 选择数据库记录
@@ -85,25 +86,39 @@ func SelectDb() {
 	fmt.Print("输入要操作的数据库id: ")
 	_, err := fmt.Scanln(&id)
 	util.HandleError(err, "查询id失败!")
-
-	resultRows, err := db.Query("SELECT url, passwd, ua FROM info WHERE id = ?", id)
+	resultRows, err := db.Query("SELECT id, url, passwd,ua FROM info WHERE id = ?", id)
 	util.HandleError(err, "查询数据库错误!")
-	CloseDB()
 	listDB(resultRows)
+	CloseDB()
+
 }
 
 // CloseDB 关闭数据库连接
 func CloseDB() {
-	err := db.Close()
-	util.HandleError(err, "关闭数据库连接失败!")
+	//err := db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		util.HandleError(err, "关闭数据库连接失败!")
+	}(db)
+
 }
 
 func listDB(resultRows *sql.Rows) {
+	// 创建颜色对象，用于将ID标记为绿色
+	green := color.New(color.FgGreen)
+	fmt.Println("+----+--------------------------------+----------+---------+")
+	fmt.Println("| ID | URL                            | Password | UA      |")
+	fmt.Println("+----+--------------------------------+----------+---------+")
+
 	for resultRows.Next() {
 		var id int
 		var url, passwd, ua string
 		err := resultRows.Scan(&id, &url, &passwd, &ua)
-		util.HandleError(err, "遍历数据库内容出错!")
-		fmt.Printf("id:%d url:%s passwd:%s ua:%s\n", id, url, passwd, ua)
+		util.HandleError(err, "遍历数据库错误!!!")
+		// 使用颜色对象输出绿色的ID和对齐的列
+		fmt.Printf("| %-2s%-1s | %-30s | %-8s | %-7s |\n", green.Sprint(id), "", url, passwd, ua)
+		fmt.Println("+----+--------------------------------+----------+---------+")
+
 	}
+
 }
