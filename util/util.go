@@ -9,10 +9,9 @@ import (
 )
 
 var (
-	HttpURL   string
-	Passwd    string
-	UserAgent string
-	//err         error
+	HttpURL     string
+	Passwd      string
+	UserAgent   string
 	ContentType = "application/x-www-form-urlencoded"
 )
 
@@ -20,7 +19,7 @@ func Init(httpURl, passwd, userAgent string) {
 	HttpURL = httpURl
 	Passwd = passwd
 	UserAgent = userAgent
-	fmt.Println(HttpURL, Passwd, UserAgent)
+	//fmt.Println(HttpURL, Passwd, UserAgent)
 	//test := "成功!"
 	//return test
 	//return HttpURL, Passwd, UserAgent, err
