@@ -14,3 +14,5 @@ fi
 
 
 echo "编译完成!"
+unset CC
+unset CXX
